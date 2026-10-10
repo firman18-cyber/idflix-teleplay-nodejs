@@ -2,6 +2,7 @@ require('dotenv').config();
 const http = require('node:http');
 const { URL } = require('node:url');
 const { TelegramClient, Api } = require('telegram');
+const bigInt = require('big-integer');
 const { StringSession } = require('telegram/sessions');
 
 const PORT = Number(process.env.PORT || process.env.SERVER_PORT || 8000);
@@ -159,7 +160,7 @@ async function* downloadRange(message, start, end) {
     });
     for await (const part of client.iterDownload({
       file: location,
-      offset: chunkStart,
+      offset: bigInt(chunkStart),
       limit: wantedLength,
       chunkSize: TG_CHUNK_SIZE,
       requestSize: TG_CHUNK_SIZE,
