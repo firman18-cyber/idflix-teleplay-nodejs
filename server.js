@@ -151,8 +151,14 @@ async function* downloadRange(message, start, end) {
     const wantedLength = chunkEnd - chunkStart + 1;
     const pieces = [];
     let got = 0;
+    const location = new Api.InputDocumentFileLocation({
+      id: doc.id,
+      accessHash: doc.accessHash,
+      fileReference: doc.fileReference,
+      thumbSize: '',
+    });
     for await (const part of client.iterDownload({
-      file: doc,
+      file: location,
       offset: chunkStart,
       limit: wantedLength,
       chunkSize: TG_CHUNK_SIZE,
