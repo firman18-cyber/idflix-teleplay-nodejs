@@ -160,6 +160,7 @@ async function* downloadRange(message, start, end) {
     });
     for await (const part of client.iterDownload({
       file: location,
+      dcId: doc.dcId,
       offset: bigInt(chunkStart),
       limit: wantedLength,
       chunkSize: TG_CHUNK_SIZE,
@@ -179,8 +180,21 @@ async function* downloadRange(message, start, end) {
     while (true) {
       const index = queue[queueIndex++];
       if (index === undefined) return;
-      try { results.set(index, { data: await fetchChunk(index, workerNo) }); }
-      catch (error) { results.set(index, { error }); }
+      try {
+        results.set(index, { data: await fetchChunk(index, workerNo) });
+      } catch (error) {
+        // Preserve the original GramJS error in DockHosting App Logs.
+        console.error('[Telegram chunk download failed]', {
+          index,
+          offset: index * CHUNK_SIZE,
+          workerNo,
+          name: error?.name,
+          message: error?.message,
+          code: error?.code,
+          error: error?.stack || String(error),
+        });
+        results.set(index, { error });
+      }
     }
   });
 
@@ -194,7 +208,16 @@ async function* downloadRange(message, start, end) {
       }
       const result = results.get(nextYield);
       results.delete(nextYield);
-      if (!result) throw new Error('Failed to retrieve Telegram chunk');
+      if (!result) {
+        console.error('[Telegram chunk scheduler] Missing result', {
+          nextYield,
+          lastChunkIndex,
+          queueIndex,
+          queueLength: queue.length,
+          resultIndexes: [...results.keys()],
+        });
+        throw new Error(`Telegram chunk scheduler lost result for index ${nextYield}`);
+      }
       if (result.error) throw result.error;
       let data = result.data;
       const chunkStart = nextYield * CHUNK_SIZE;
