@@ -1,0 +1,10 @@
+{
+  "name": "idflix-teleplay-nodejs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Node.js/GramJS experimental port of IDFLIX TelePlay streaming backend",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "check": "node --check server.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": { "telegram": "^2.26.22", "dotenv": "^16.4.7" }
+}
